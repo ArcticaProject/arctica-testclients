@@ -16,9 +16,10 @@ Package: arctica-testclient-nx3
 Architecture: all
 Depends:
  ${misc:Depends},
+ nxproxy,
  openssh-client,
- telekinesis-client,
  perl,
+ telekinesis-client,
 Description: Arctica Test Client (launching up an NXv3 based desktop session)
  The Arctica Project brings forth a remote computing framework of
  enterprise grade and quality. The Arctica Framework is a highly

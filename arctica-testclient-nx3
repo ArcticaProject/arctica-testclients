@@ -70,7 +70,7 @@ system("ssh -n -N -T -f -M -S /tmp/ssh.sock -L 8888:localhost:8888 -L 4009:local
 
 system("ssh -S /tmp/ssh.sock foo\@bar killall -q nxagent");
 
-open(SSHRNX, "-|", "ssh","-S","/tmp/ssh.sock","foo\@bar","nxinit.run");my @DATA = <SSHRNX>;close(SSHRNX);
+open(SSHRNX, "-|", "ssh","-S","/tmp/ssh.sock","foo\@bar","arctica-testserver-nx3");my @DATA = <SSHRNX>;close(SSHRNX);
 
 unless (-d "$ENV{'HOME'}/.nx/S-9/") {
 	mkdir("$ENV{'HOME'}/.nx/");

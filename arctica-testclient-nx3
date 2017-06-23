@@ -1,0 +1,120 @@
+#!/usr/bin/perl
+
+################################################################################
+#          _____ _
+#         |_   _| |_  ___
+#           | | | ' \/ -_)
+#           |_| |_||_\___|
+#                   _   _             ____            _           _
+#    / \   _ __ ___| |_(_) ___ __ _  |  _ \ _ __ ___ (_) ___  ___| |_
+#   / _ \ | '__/ __| __| |/ __/ _` | | |_) | '__/ _ \| |/ _ \/ __| __|
+#  / ___ \| | | (__| |_| | (_| (_| | |  __/| | | (_) | |  __/ (__| |_
+# /_/   \_\_|  \___|\__|_|\___\__,_| |_|   |_|  \___// |\___|\___|\__|
+#                                                  |__/
+#          The Arctica Modular Remote Computing Framework
+#
+################################################################################
+#
+# Copyright (C) 2015-2016 The Arctica Project
+# http://arctica-project.org/
+#
+# This code is dual licensed: strictly GPL-2 or AGPL-3+
+#
+# GPL-2
+# -----
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the
+# Free Software Foundation, Inc.,
+#
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# AGPL-3+
+# -------
+# This programm is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This programm is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program; if not, write to the
+# Free Software Foundation, Inc.,
+# 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# Copyright (C) 2015-2017 Guangzhou Nianguan Electronics Technology Co.Ltd.
+#                         <opensource@gznianguan.com>
+# Copyright (C) 2015-2017 Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
+#
+################################################################################
+
+@SIG{qw( INT TERM HUP )} = sub {print "TERMINATE!!! ($_[0])\n";cleanup();};
+my $local_tadir = `arctica-getdir 2>/dev/null`;$local_tadir =~ s/\n//g;
+# CHANGE USERNAME AND IP/HOST:
+my $usernamenhost  = $ARGV[0];
+
+system("ssh -n -N -T -f -M -S /tmp/ssh.sock -L 8888:localhost:8888 -L 4009:localhost:4009 $usernamenhost");
+
+
+system("ssh -S /tmp/ssh.sock foo\@bar killall -q nxagent");
+
+open(SSHRNX, "-|", "ssh","-S","/tmp/ssh.sock","foo\@bar","nxinit.run");my @DATA = <SSHRNX>;close(SSHRNX);
+
+unless (-d "$ENV{'HOME'}/.nx/S-9/") {
+	mkdir("$ENV{'HOME'}/.nx/");
+        mkdir("$ENV{'HOME'}/.nx/S-9");
+}
+
+foreach my $line (@DATA) {
+	if ($line =~ /NX_HOST\=([^\n]*)/) {
+		$ENV{'NX_HOST'} = $1;
+	} elsif ($line =~ /echo \"(.*)\" \>\/.*\/options\n/) {
+		open(OPT,">$ENV{'HOME'}/.nx/S-9/options");
+		print OPT "$1\n";
+		close(OPT);
+	}
+}
+
+
+system("ssh -f -S /tmp/ssh.sock foo\@bar \"telekinesis-server 2>&1 > /dev/null\"");
+system("ssh -f -S /tmp/ssh.sock foo\@bar \"DISPLAY=:9 xfce4-session&\"&");
+open(SSHRNX, "-|","ssh -f -S /tmp/ssh.sock foo\@bar \"arctica-getdir 2>/dev/null\"");my @DATA2 = <SSHRNX>;close(SSHRNX);
+my $remote_tadir = @DATA2[0];$remote_tadir =~ s/\n//g;
+
+open(SSHRNX, "-|","ssh -f -S /tmp/ssh.sock foo\@bar \"cat /tmp/.arctica*/teki/server_sockets.info\"");my @DATA3 = <SSHRNX>;close(SSHRNX);
+if (@DATA3[1] =~ /remote\:([a-zA-Z0-9]*)/) {
+	my $soc_id = $1;
+	open(TMPS,">$local_tadir/teki/server_sockets.info");
+	print TMPS "\n$soc_id\n";
+	close(TMPS);
+	system("ssh -n -N -T -f -S /tmp/ssh.sock -L$local_tadir/soc/local/$soc_id.sock:$remote_tadir/soc/local/$soc_id.sock foo\@bar");
+	system("telekinesis-client $1 2>&1 > /dev/null&");
+
+	system("nxproxy -S nx/nx,options=$ENV{'HOME'}/.nx/S-9/options:9 2>>$ENV{'HOME'}/.nx/S-9/session&");
+
+	while (1) {
+		sleep 5;
+		print "Still HERE!\n";
+	}
+}
+
+sub cleanup {
+	print "DONE... Cleaning up...\n\n";
+	system("killall -q telekinesis-client");
+        system("ssh -S /tmp/ssh.sock foo\@bar killall -q telekinesis-server");
+	system("ssh -S /tmp/ssh.sock foo\@bar killall -q nxagent");
+	system("killall -q ssh");
+	exit;
+}

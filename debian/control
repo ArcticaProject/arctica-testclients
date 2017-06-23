@@ -1,0 +1,28 @@
+Source: arctica-testclients
+Section: misc
+Priority: optional
+Build-Depends:
+ cdbs,
+ debhelper (>= 9),
+Maintainer: Arctica Project Developers <devs@lists.arctica-project.org>
+Uploaders:
+ Mike Gabriel <mike.gabriel@das-netzwerkteam.de>
+Homepage: https://arctica-project.org/
+Vcs-Git: https://github.com/ArcticaProject/arctica-testclients
+Vcs-Browser: https://github.com/ArcticaProject/arctica-testclients
+Standards-Version: 3.9.8
+
+Package: arctica-testclient-nx3
+Architecture: all
+Depends:
+ ${misc:Depends},
+Description: Arctica Test Client (launching up an NXv3 based desktop session)
+ The Arctica Project brings forth a remote computing framework of
+ enterprise grade and quality. The Arctica Framework is a highly
+ modularized and thus pluggable for developing alls sort of remote
+ services.
+ .
+ This package provides a simple test client that can fire up a
+ server-side desktop session inside an NXv3 nxagent session.
+ .
+ The script also sets up Arctica Telekinesis client/server connection.

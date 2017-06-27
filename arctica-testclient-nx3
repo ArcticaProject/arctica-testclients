@@ -61,6 +61,14 @@
 ################################################################################
 
 @SIG{qw( INT TERM HUP )} = sub {print "TERMINATE!!! ($_[0])\n";cleanup();};
+
+use File::Basename;
+
+if (($#ARGV == -1) || (!( $ARGV[0] =~ m/.*@.*/))) {
+	printf ("\nusage: %s <user>@<host>\n\n", basename($0));
+	exit (0);
+}
+
 my $local_tadir = `arctica-getdir 2>/dev/null`;$local_tadir =~ s/\n//g;
 # CHANGE USERNAME AND IP/HOST:
 my $usernamenhost  = $ARGV[0];
